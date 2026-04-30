@@ -14,7 +14,7 @@ public class BossCommand implements CommandExecutor, TabCompleter {
     private final BossArena plugin;
     private final BossManager bossManager;
 
-    private static final List<String> ADMIN_SUBS = List.of("spawn", "loot", "npc", "setarena", "setspawn");
+    private static final List<String> ADMIN_SUBS = List.of("spawn", "loot", "npc", "setarena", "setspawn", "reset");
     private static final List<String> USER_SUBS  = List.of("fight");
     private static final List<String> LOOT_TIERS = List.of("primo", "secondo", "terzo", "tutti");
 
@@ -39,6 +39,7 @@ public class BossCommand implements CommandExecutor, TabCompleter {
             case "npc"      -> handleNpc(player);
             case "setarena" -> handleSetArena(player);
             case "setspawn" -> handleSetSpawn(player);
+            case "reset"    -> handleReset(player);
             default         -> sendHelp(player);
         }
         return true;
@@ -140,6 +141,15 @@ public class BossCommand implements CommandExecutor, TabCompleter {
         }
         bossManager.setPlayerSpawnLocation(player.getLocation());
         player.sendMessage(BossManager.color("&aSpawn player impostato!"));
+    }
+
+    private void handleReset(Player player) {
+        if (!player.hasPermission("bossarena.admin")) {
+            player.sendMessage(BossManager.color("&cNon hai il permesso!"));
+            return;
+        }
+        bossManager.resetSession();
+        player.sendMessage(BossManager.color("&aSessione boss resettata!"));
     }
 
     @Override

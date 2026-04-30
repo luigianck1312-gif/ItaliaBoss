@@ -15,8 +15,10 @@ player-spawn:
   z: 0.0
 
 boss:
-  # Nome del mob MythicMobs da spawnare
-  mythic-name: GildedSentinel
+  # Nome del mob MythicMobs
+  mythic-name: gilded_sentinel
+  # Comando ESATTO da eseguire per spawnare il boss (come dalla console)
+  spawn-command: "mm mobs spawn gilded_sentinel 1 world,50073,85,49956,0,0"
   # Ore tra uno spawn automatico e l'altro (48 = 2 giorni)
   auto-spawn-hours: 48
   # Minimo player online per spawn automatico
