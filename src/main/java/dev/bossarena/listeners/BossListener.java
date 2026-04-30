@@ -3,7 +3,6 @@ package dev.bossarena.listeners;
 import dev.bossarena.BossArena;
 import dev.bossarena.managers.BossManager;
 import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
-import io.lumine.mythic.bukkit.events.MythicMobDamageEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
