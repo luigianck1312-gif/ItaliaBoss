@@ -54,20 +54,14 @@ public class BossManager {
         String mythicName = plugin.getConfig().getString("boss.mythic-name", "gilded_sentinel");
 
         try {
-            // Teletrasporta la console virtualmente all'arena e spawna
-            String cmd = "execute in " + arenaLoc.getWorld().getName() +
-                    " run mm mobs spawn " + mythicName +
-                    " 1 " + (int)arenaLoc.getX() + " " + (int)arenaLoc.getY() + " " + (int)arenaLoc.getZ();
+            String cmd = "mm mobs spawn " + mythicName + " 1 " +
+                    arenaLoc.getWorld().getName() + "," +
+                    arenaLoc.getBlockX() + "," +
+                    arenaLoc.getBlockY() + "," +
+                    arenaLoc.getBlockZ() + ",0,0";
 
-            // Usa direttamente il comando mm come dalla console
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        "mm mobs spawn " + mythicName +
-                        " 1 " + arenaLoc.getWorld().getName() +
-                        "," + arenaLoc.getBlockX() +
-                        "," + arenaLoc.getBlockY() +
-                        "," + arenaLoc.getBlockZ());
-            });
+            plugin.getLogger().info("[BossArena] Spawn command: " + cmd);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
 
             if (currentSession == null)
                 currentSession = new BossSession(mythicName);
