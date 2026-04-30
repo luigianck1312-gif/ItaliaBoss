@@ -54,24 +54,17 @@ public class BossManager {
         String mythicName = plugin.getConfig().getString("boss.mythic-name", "gilded_sentinel");
 
         try {
-            io.lumine.mythic.bukkit.MythicBukkit mm = io.lumine.mythic.bukkit.MythicBukkit.inst();
-            io.lumine.mythic.api.mobs.MythicMob mythicMob = mm.getMobManager()
-                    .getMythicMob(mythicName).orElse(null);
+            io.lumine.mythic.bukkit.BukkitAPIHelper api =
+                    io.lumine.mythic.bukkit.MythicBukkit.inst().getAPIHelper();
 
-            if (mythicMob == null) {
-                plugin.getLogger().warning("Mob MythicMobs non trovato: " + mythicName);
+            org.bukkit.entity.Entity entity = api.spawnMythicMob(mythicName, arenaLoc);
+
+            if (entity == null) {
+                plugin.getLogger().warning("Mob MythicMobs non trovato o spawn fallito: " + mythicName);
                 return false;
             }
 
-            io.lumine.mythic.core.mobs.ActiveMob activeMob = mythicMob.spawn(
-                    io.lumine.mythic.bukkit.adapters.BukkitAdapter.adapt(arenaLoc), 1);
-
-            if (activeMob == null) {
-                plugin.getLogger().warning("Spawn mob fallito!");
-                return false;
-            }
-
-            activeMobUUID = activeMob.getUniqueId();
+            activeMobUUID = entity.getUniqueId();
             plugin.getLogger().info("Boss spawnato: " + activeMobUUID);
 
             if (currentSession == null)
