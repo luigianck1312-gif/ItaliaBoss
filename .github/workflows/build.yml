@@ -1,0 +1,26 @@
+name: Build BossArena
+on:
+  push:
+    branches: [ main, master ]
+  release:
+    types: [ created ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - run: mvn package -B --no-transfer-progress
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BossArena-1.0.0
+          path: target/BossArena-1.0.0.jar
+          retention-days: 30
+      - if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/BossArena-1.0.0.jar
