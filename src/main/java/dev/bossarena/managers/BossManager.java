@@ -39,10 +39,12 @@ public class BossManager {
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     public boolean spawnBoss() {
-        if (currentSession != null && currentSession.isActive()) {
-            return false; // già attivo
-        }
+        if (isBossActive()) return false;
+        announceAndScheduleSpawn();
+        return true;
+    }
 
+    private boolean spawnBossInternal() {
         Location arenaLoc = getArenaLocation();
         if (arenaLoc == null) return false;
 
@@ -56,7 +58,8 @@ public class BossManager {
                 return false;
             }
             activeMobUUID = entity.getUniqueId();
-            currentSession = new BossSession(mythicName);
+            if (currentSession == null)
+                currentSession = new BossSession(mythicName);
             currentSession.start();
             lastSpawnTime = System.currentTimeMillis();
             return true;
@@ -66,34 +69,42 @@ public class BossManager {
         }
     }
 
+    private boolean announced = false;
+
     public void announceAndScheduleSpawn() {
         int delay = plugin.getConfig().getInt("boss.spawn-delay-seconds", 20);
         String msg = color(plugin.getConfig().getString("messages.announce", "&cIL BOSS ARRIVA!")
                 .replace("%seconds%", String.valueOf(delay)));
 
-        // Annuncio a tutti
+        announced = true;
+        currentSession = new BossSession(plugin.getConfig().getString("boss.mythic-name", "GildedSentinel"));
+
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.sendMessage(msg);
             p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1f, 0.8f);
         }
 
-        // Spawn dopo delay
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            boolean ok = spawnBoss();
-            if (!ok) plugin.getLogger().warning("Spawn automatico boss fallito!");
+            announced = false;
+            boolean ok = spawnBossInternal();
+            if (!ok) {
+                currentSession = null;
+                plugin.getLogger().warning("Spawn automatico boss fallito!");
+            }
         }, delay * 20L);
     }
 
     // ── Fight ─────────────────────────────────────────────────────────────────
 
     public boolean joinFight(Player player) {
-        if (currentSession == null || !currentSession.isActive()) return false;
+        if (!isBossActive()) return false;
+        if (currentSession == null) return false;
         if (currentSession.isDead(player.getUniqueId())) return false;
         if (currentSession.isInArena(player.getUniqueId())) return false;
 
         currentSession.joinPlayer(player);
-        Location arena = getArenaLocation();
-        if (arena != null) player.teleport(arena);
+        Location spawnLoc = getPlayerSpawnLocation();
+        if (spawnLoc != null) player.teleport(spawnLoc);
         return true;
     }
 
@@ -159,7 +170,7 @@ public class BossManager {
     // ── Stato ─────────────────────────────────────────────────────────────────
 
     public boolean isBossActive() {
-        return currentSession != null && currentSession.isActive();
+        return announced || (currentSession != null && currentSession.isActive());
     }
 
     public BossSession getCurrentSession() { return currentSession; }
@@ -279,6 +290,25 @@ public class BossManager {
         plugin.getConfig().set("arena.x", loc.getX());
         plugin.getConfig().set("arena.y", loc.getY());
         plugin.getConfig().set("arena.z", loc.getZ());
+        plugin.saveConfig();
+    }
+
+    public Location getPlayerSpawnLocation() {
+        String worldName = plugin.getConfig().getString("player-spawn.world");
+        if (worldName == null) return getArenaLocation(); // fallback
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return getArenaLocation();
+        double x = plugin.getConfig().getDouble("player-spawn.x");
+        double y = plugin.getConfig().getDouble("player-spawn.y");
+        double z = plugin.getConfig().getDouble("player-spawn.z");
+        return new Location(world, x, y, z);
+    }
+
+    public void setPlayerSpawnLocation(Location loc) {
+        plugin.getConfig().set("player-spawn.world", loc.getWorld().getName());
+        plugin.getConfig().set("player-spawn.x", loc.getX());
+        plugin.getConfig().set("player-spawn.y", loc.getY());
+        plugin.getConfig().set("player-spawn.z", loc.getZ());
         plugin.saveConfig();
     }
 

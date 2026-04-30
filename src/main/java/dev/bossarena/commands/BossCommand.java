@@ -14,7 +14,7 @@ public class BossCommand implements CommandExecutor, TabCompleter {
     private final BossArena plugin;
     private final BossManager bossManager;
 
-    private static final List<String> ADMIN_SUBS = List.of("spawn", "loot", "npc", "setarena");
+    private static final List<String> ADMIN_SUBS = List.of("spawn", "loot", "npc", "setarena", "setspawn");
     private static final List<String> USER_SUBS  = List.of("fight");
     private static final List<String> LOOT_TIERS = List.of("primo", "secondo", "terzo", "tutti");
 
@@ -38,6 +38,7 @@ public class BossCommand implements CommandExecutor, TabCompleter {
             case "loot"     -> handleLoot(player, args);
             case "npc"      -> handleNpc(player);
             case "setarena" -> handleSetArena(player);
+            case "setspawn" -> handleSetSpawn(player);
             default         -> sendHelp(player);
         }
         return true;
@@ -50,7 +51,8 @@ public class BossCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(BossManager.color("&e/boss spawn <nome> &7- Spawna il boss nell'arena"));
             p.sendMessage(BossManager.color("&e/boss loot <nome> <primo|secondo|terzo|tutti> &7- Modifica loot"));
             p.sendMessage(BossManager.color("&e/boss npc &7- Piazza il villager ricompense dove sei"));
-            p.sendMessage(BossManager.color("&e/boss setarena &7- Imposta spawn arena dove sei"));
+            p.sendMessage(BossManager.color("&e/boss setarena &7- Imposta spawn boss dove sei"));
+            p.sendMessage(BossManager.color("&e/boss setspawn &7- Imposta spawn player dove sei"));
         }
     }
 
@@ -129,6 +131,15 @@ public class BossCommand implements CommandExecutor, TabCompleter {
         bossManager.setArenaLocation(player.getLocation());
         player.sendMessage(BossManager.color(plugin.getConfig()
                 .getString("messages.arena-set", "&aArena impostata!")));
+    }
+
+    private void handleSetSpawn(Player player) {
+        if (!player.hasPermission("bossarena.admin")) {
+            player.sendMessage(BossManager.color("&cNon hai il permesso!"));
+            return;
+        }
+        bossManager.setPlayerSpawnLocation(player.getLocation());
+        player.sendMessage(BossManager.color("&aSpawn player impostato!"));
     }
 
     @Override
