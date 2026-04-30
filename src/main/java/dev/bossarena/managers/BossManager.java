@@ -72,12 +72,9 @@ public class BossManager {
                         if (mm.getMobManager().isActiveMob(e.getUniqueId())) {
                             var activeMob = mm.getMobManager().getActiveMob(e.getUniqueId());
                             if (activeMob.isPresent()) {
-                                String mobName = activeMob.get().getMobType().getConfig().getName();
-                                if (mobName.equalsIgnoreCase(mythicName)) {
-                                    activeMobUUID = e.getUniqueId();
-                                    plugin.getLogger().info("Boss trovato: " + e.getUniqueId());
-                                    break;
-                                }
+                                activeMobUUID = e.getUniqueId();
+                                plugin.getLogger().info("Boss trovato: " + e.getUniqueId());
+                                break;
                             }
                         }
                     } catch (Exception ex) {
