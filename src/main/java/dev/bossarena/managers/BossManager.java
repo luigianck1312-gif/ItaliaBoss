@@ -54,23 +54,41 @@ public class BossManager {
         String mythicName = plugin.getConfig().getString("boss.mythic-name", "gilded_sentinel");
 
         try {
-            io.lumine.mythic.bukkit.BukkitAPIHelper api =
-                    io.lumine.mythic.bukkit.MythicBukkit.inst().getAPIHelper();
+            // Teletrasporta la console virtualmente all'arena e spawna
+            String cmd = "execute in " + arenaLoc.getWorld().getName() +
+                    " run mm mobs spawn " + mythicName +
+                    " 1 " + (int)arenaLoc.getX() + " " + (int)arenaLoc.getY() + " " + (int)arenaLoc.getZ();
 
-            org.bukkit.entity.Entity entity = api.spawnMythicMob(mythicName, arenaLoc);
-
-            if (entity == null) {
-                plugin.getLogger().warning("Mob MythicMobs non trovato o spawn fallito: " + mythicName);
-                return false;
-            }
-
-            activeMobUUID = entity.getUniqueId();
-            plugin.getLogger().info("Boss spawnato: " + activeMobUUID);
+            // Usa direttamente il comando mm come dalla console
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                        "mm mobs spawn " + mythicName +
+                        " 1 " + arenaLoc.getWorld().getName() +
+                        "," + arenaLoc.getBlockX() +
+                        "," + arenaLoc.getBlockY() +
+                        "," + arenaLoc.getBlockZ());
+            });
 
             if (currentSession == null)
                 currentSession = new BossSession(mythicName);
             currentSession.start();
             lastSpawnTime = System.currentTimeMillis();
+
+            // Cerca UUID del mob dopo 20 tick
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                for (org.bukkit.entity.Entity e : arenaLoc.getWorld().getNearbyEntities(arenaLoc, 10, 10, 10)) {
+                    try {
+                        if (io.lumine.mythic.bukkit.MythicBukkit.inst().getMobManager().isActiveMob(e.getUniqueId())) {
+                            activeMobUUID = e.getUniqueId();
+                            plugin.getLogger().info("[BossArena] Boss UUID trovato: " + activeMobUUID);
+                            break;
+                        }
+                    } catch (Exception ex) {
+                        plugin.getLogger().warning("Errore ricerca UUID boss: " + ex.getMessage());
+                    }
+                }
+            }, 20L);
+
             return true;
 
         } catch (Exception e) {
