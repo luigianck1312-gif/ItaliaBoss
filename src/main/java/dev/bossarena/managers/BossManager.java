@@ -64,20 +64,20 @@ public class BossManager {
                 return false;
             }
 
-            // Cerca il mob spawnato nell'arena dopo 1 tick
+            // Cerca il mob spawnato nell'arena dopo 5 tick
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 for (org.bukkit.entity.Entity e : arenaLoc.getWorld().getNearbyEntities(arenaLoc, 5, 5, 5)) {
-                    var meta = e.getPersistentDataContainer();
-                    // cerca il mob MythicMobs più vicino all'arena
                     try {
                         io.lumine.mythic.bukkit.MythicBukkit mm = io.lumine.mythic.bukkit.MythicBukkit.inst();
                         if (mm.getMobManager().isActiveMob(e.getUniqueId())) {
                             var activeMob = mm.getMobManager().getActiveMob(e.getUniqueId());
-                            if (activeMob.isPresent() &&
-                                activeMob.get().getMobType().getInternalName().equalsIgnoreCase(mythicName)) {
-                                activeMobUUID = e.getUniqueId();
-                                plugin.getLogger().info("Boss trovato: " + e.getUniqueId());
-                                break;
+                            if (activeMob.isPresent()) {
+                                String mobName = activeMob.get().getMobType().getConfig().getName();
+                                if (mobName.equalsIgnoreCase(mythicName)) {
+                                    activeMobUUID = e.getUniqueId();
+                                    plugin.getLogger().info("Boss trovato: " + e.getUniqueId());
+                                    break;
+                                }
                             }
                         }
                     } catch (Exception ex) {
