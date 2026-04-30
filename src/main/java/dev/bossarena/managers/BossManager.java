@@ -48,21 +48,50 @@ public class BossManager {
         Location arenaLoc = getArenaLocation();
         if (arenaLoc == null) return false;
 
-        String mythicName = plugin.getConfig().getString("boss.mythic-name", "GildedSentinel");
+        String mythicName = plugin.getConfig().getString("boss.mythic-name", "gilded_sentinel");
 
         try {
-            BukkitAPIHelper api = MythicBukkit.inst().getAPIHelper();
-            Entity entity = api.spawnMythicMob(mythicName, arenaLoc);
-            if (entity == null) {
-                plugin.getLogger().warning("MythicMobs non ha trovato il mob: " + mythicName);
+            // Usa il comando direttamente come fa /mm mobs spawn
+            String cmd = "mm mobs spawn " + mythicName + " 1 " +
+                    arenaLoc.getWorld().getName() + "," +
+                    arenaLoc.getX() + "," +
+                    arenaLoc.getY() + "," +
+                    arenaLoc.getZ();
+
+            boolean dispatched = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            if (!dispatched) {
+                plugin.getLogger().warning("Comando spawn fallito: " + cmd);
                 return false;
             }
-            activeMobUUID = entity.getUniqueId();
+
+            // Cerca il mob spawnato nell'arena dopo 1 tick
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                for (org.bukkit.entity.Entity e : arenaLoc.getWorld().getNearbyEntities(arenaLoc, 5, 5, 5)) {
+                    var meta = e.getPersistentDataContainer();
+                    // cerca il mob MythicMobs più vicino all'arena
+                    try {
+                        io.lumine.mythic.bukkit.MythicBukkit mm = io.lumine.mythic.bukkit.MythicBukkit.inst();
+                        if (mm.getMobManager().isActiveMob(e.getUniqueId())) {
+                            var activeMob = mm.getMobManager().getActiveMob(e.getUniqueId());
+                            if (activeMob.isPresent() &&
+                                activeMob.get().getMobType().getInternalName().equalsIgnoreCase(mythicName)) {
+                                activeMobUUID = e.getUniqueId();
+                                plugin.getLogger().info("Boss trovato: " + e.getUniqueId());
+                                break;
+                            }
+                        }
+                    } catch (Exception ex) {
+                        plugin.getLogger().warning("Errore ricerca mob: " + ex.getMessage());
+                    }
+                }
+            }, 5L);
+
             if (currentSession == null)
                 currentSession = new BossSession(mythicName);
             currentSession.start();
             lastSpawnTime = System.currentTimeMillis();
             return true;
+
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Errore spawn boss", e);
             return false;
