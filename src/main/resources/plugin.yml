@@ -1,0 +1,21 @@
+name: BossArena
+version: 1.0.0
+main: dev.bossarena.BossArena
+api-version: '1.21'
+depend: [MythicMobs]
+description: Sistema boss arena con loot, tracking danni e NPC ricompense
+authors: [BossArena]
+
+commands:
+  boss:
+    description: Comando principale boss
+    usage: /boss <spawn|fight|loot|npc|setarena|setspawn>
+    permission: bossarena.use
+
+permissions:
+  bossarena.admin:
+    description: Accesso comandi admin boss
+    default: op
+  bossarena.use:
+    description: Usa /boss fight
+    default: true

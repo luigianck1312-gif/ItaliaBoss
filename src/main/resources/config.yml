@@ -1,0 +1,39 @@
+# BossArena Configuration
+
+arena:
+  # Coordinate spawn boss - settabili con /boss setarena
+  world: world
+  x: 0.0
+  y: 64.0
+  z: 0.0
+
+boss:
+  # Nome del mob MythicMobs da spawnare
+  mythic-name: GildedSentinel
+  # Ore tra uno spawn automatico e l'altro (48 = 2 giorni)
+  auto-spawn-hours: 48
+  # Minimo player online per spawn automatico
+  min-players: 5
+  # Secondi di attesa tra l'annuncio e lo spawn effettivo
+  spawn-delay-seconds: 20
+
+messages:
+  announce: "&4&l\u2620 &c&lIL GILDED SENTINEL SI \u00c8 RISVEGLIATO! &4&l\u2620\n&7Le fondamenta della terra tremano sotto i suoi passi...\n&eLe sue catene si sono spezzate dopo secoli di prigionia.\n&c&lChi ha il coraggio di affrontare l'oscurit\u00e0 incarnata?\n&7Scrivi &e/boss fight &7per entrare nell'arena!\n&8(Il boss spawner\u00e0 tra &e%seconds% secondi&8)"
+  fight-join: "&aHai accettato la sfida! Preparati..."
+  fight-no-boss: "&cNon c'\u00e8 nessun boss attivo al momento!"
+  fight-already-dead: "&cSei morto durante la battaglia, non puoi rientrare!"
+  fight-already-in: "&cSei gi\u00e0 nell'arena!"
+  boss-dead: "&4&l\u2620 &6&lIL GILDED SENTINEL \u00c8 CADUTO! &4&l\u2620\n&7La sua oscurit\u00e0 si dissolve nell'etere...\n&aI valorosi combattenti possono ritirare le loro ricompense dall'NPC!"
+  no-arena-set: "&cL'arena non \u00e8 stata configurata! Usa /boss setarena"
+  arena-set: "&aArena impostata con successo!"
+  npc-placed: "&aVillager ricompense piazzato!"
+  loot-saved: "&aLoot salvato con successo!"
+  cooldown: "&cIl boss si sta riprendendo! Prossimo spawn tra &e%time%&c."
+
+loot:
+  # Configurato tramite GUI /boss loot
+  gilded:
+    primo: []
+    secondo: []
+    terzo: []
+    tutti: []
