@@ -20,6 +20,7 @@ public class BossManager {
 
     private UUID rewardNpcUUID = null;
     private final Set<UUID> claimedRewards = new HashSet<>();
+    private final Set<UUID> eligibleSurvivors = new HashSet<>();
     private final Map<UUID, Integer> pendingRanks = new HashMap<>();
     private long lastSpawnTime = 0;
 
@@ -39,6 +40,9 @@ public class BossManager {
         currentSession = null;
         activeMobUUID = null;
         announced = false;
+        pendingRanks.clear();
+        claimedRewards.clear();
+        eligibleSurvivors.clear();
     }
 
     public void announceAndScheduleSpawn() {
@@ -46,6 +50,9 @@ public class BossManager {
         String msg = color(plugin.getConfig().getString("messages.announce",
                 "&4&l☠ &c&lIL GILDED SENTINEL SI È RISVEGLIATO! &4&l☠\n&7Scrivi &e/boss fight &7per entrare!\n&8(Spawna tra &e%seconds% secondi&8)")
                 .replace("%seconds%", String.valueOf(delay)));
+
+        // Reset completo sessione precedente
+        resetSession();
 
         announced = true;
         currentSession = new BossSession(plugin.getConfig().getString("boss.mythic-name", "gilded_sentinel"));
@@ -97,9 +104,15 @@ public class BossManager {
         if (currentSession.isDead(player.getUniqueId())) return false;
         if (currentSession.isInArena(player.getUniqueId())) return false;
 
+        // Salva posizione PRIMA del tp
         currentSession.joinPlayer(player);
+
         Location spawnLoc = getPlayerSpawnLocation();
-        if (spawnLoc != null) player.teleport(spawnLoc);
+        if (spawnLoc == null) {
+            player.sendMessage(color("&cSpawn player non configurato! Usa /boss setspawn"));
+            return false;
+        }
+        player.teleport(spawnLoc, PlayerTeleportEvent.TeleportCause.PLUGIN);
         return true;
     }
 
@@ -135,9 +148,13 @@ public class BossManager {
         List<UUID> topDamagers = currentSession.getTopDamagersAlive();
         pendingRanks.clear();
         claimedRewards.clear();
+        eligibleSurvivors.clear();
+        // Top 3
         if (topDamagers.size() > 0) pendingRanks.put(topDamagers.get(0), 1);
         if (topDamagers.size() > 1) pendingRanks.put(topDamagers.get(1), 2);
         if (topDamagers.size() > 2) pendingRanks.put(topDamagers.get(2), 3);
+        // Tutti i sopravvissuti (per loot "tutti")
+        eligibleSurvivors.addAll(currentSession.getSurvivors());
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> returnPlayers(), 40L);
         activeMobUUID = null;
@@ -189,7 +206,9 @@ public class BossManager {
     public boolean isRewardNpc(UUID uuid) { return uuid.equals(rewardNpcUUID); }
 
     public boolean canClaim(UUID uuid) {
-        return !claimedRewards.contains(uuid) && pendingRanks.containsKey(uuid);
+        if (claimedRewards.contains(uuid)) return false;
+        // Può ritirare se è nei top 3 OPPURE se è un sopravvissuto (loot "tutti")
+        return pendingRanks.containsKey(uuid) || eligibleSurvivors.contains(uuid);
     }
 
     public void claimRewards(Player player) {
@@ -198,23 +217,31 @@ public class BossManager {
             player.sendMessage(color("&cHai già ritirato le tue ricompense!"));
             return;
         }
+        if (!canClaim(uuid)) {
+            player.sendMessage(color("&cNon hai ricompense disponibili!"));
+            return;
+        }
+
         List<ItemStack> rewards = new ArrayList<>();
         int rank = pendingRanks.getOrDefault(uuid, 0);
         if (rank == 1)      rewards.addAll(getLootItems("primo"));
         else if (rank == 2) rewards.addAll(getLootItems("secondo"));
         else if (rank == 3) rewards.addAll(getLootItems("terzo"));
-        rewards.addAll(getLootItems("tutti"));
+        if (eligibleSurvivors.contains(uuid))
+            rewards.addAll(getLootItems("tutti"));
+
+        claimedRewards.add(uuid);
 
         if (rewards.isEmpty()) {
-            player.sendMessage(color("&eNessuna ricompensa disponibile."));
+            player.sendMessage(color("&eNessun oggetto configurato nel loot. Usa /boss loot per aggiungerne!"));
             return;
         }
+
         for (ItemStack item : rewards) {
             if (item != null)
                 player.getInventory().addItem(item).forEach((slot, leftover) ->
                         player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         }
-        claimedRewards.add(uuid);
         player.sendMessage(color("&aHai ritirato le tue ricompense!"));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
     }
